@@ -7,4 +7,5 @@ package com.bjsxt.pojo;
  * @version: 1.0
  */
 public class Git {
+    private String name;
 }

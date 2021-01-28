@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+    "
+       default-autowire="byName"
+>
+
+    <!--SSM配置注解扫描-->
+    <context:component-scan base-package="com.bjsxt.service.impl"></context:component-scan>
+    <!--SSM配置属性文件扫描-->
+    <context:property-placeholder location="classpath:db.properties"></context:property-placeholder>
+    <!--SSM配置数据源-->
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="${mysql.driver}"></property>
+        <property name="url" value="${mysql.url}"></property>
+        <property name="username" value="${mysql.username}"></property>
+        <property name="password" value="${mysql.password}"></property>
+    </bean>
+    <!--SSM配置Mybatis工厂-->
+<!--<bean id="factory" class="org.mybatis.spring.SqlSessionFactoryBean">-->
+    <!--SSM配置MybatisPlus工厂-->
+    <bean id="factory" class="com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean">
+        <!--引入全局策略-->
+        <property name="globalConfig" ref="globalConfig"></property>
+        <!--配置MybatisPlus对应的分页插件-->
+        <property name="plugins">
+            <array>
+                <!--配置MybatisPlus的分页插件：拦截对象-->
+                <bean class="com.baomidou.mybatisplus.extension.plugins.PaginationInterceptor">
+                    <property name="dialectType" value="mysql"></property><!--设置当前数据库的类型（指明要进行分页操作的数据库）-->
+                </bean>
+            </array>
+        </property>
+    </bean>
+    <!--SSM配置MybatisPlus全局策略(表名t_user对应类名User)-->
+    <bean id="globalConfig" class="com.baomidou.mybatisplus.core.config.GlobalConfig">
+        <!--配置数据库全局默认映射关系-->
+        <property name="dbConfig">
+            <bean id="db" class="com.baomidou.mybatisplus.core.config.GlobalConfig$DbConfig">
+                <!--配置全局-设置实体类和表的映射关系的前缀or在实体类上添加注解@TableName("t_admin")-->
+                <property name="tablePrefix" value="t_"></property>
+                <!--配置全局-主键自增-->
+                <property name="idType" value="AUTO"></property>
+            </bean>
+        </property>
+    </bean>
+
+    <!--配置mapper扫描-->
+    <bean id="mapper" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="factory"></property>
+        <property name="basePackage" value="com.bjsxt.mapper"></property>
+    </bean>
+    <!--配置事务bean-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"></bean>
+    <!--配置事务管理方法-->
+    <tx:advice id="advice"  transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="sel*" read-only="true"/>
+            <tx:method name="ins*"/>
+            <tx:method name="up*"/>
+            <tx:method name="del*"/>
+        </tx:attributes>
+    </tx:advice>
+    <!--配置事务切面-->
+    <aop:config>
+        <aop:pointcut id="my" expression="execution(* com.bjsxt.service.impl.*.*(..))"/>
+        <aop:advisor advice-ref="advice" pointcut-ref="my"></aop:advisor>
+    </aop:config>
+</beans>
